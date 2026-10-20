@@ -1,0 +1,26 @@
+[package]
+name = "shanten-lens-game-record"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace]
+
+[[bin]]
+name = "game-record"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+prost = "0.14"
+prost-reflect = { version = "0.16", features = ["serde"] }
+serde_json = "1"
+
+[build-dependencies]
+prost-build = "0.14"
+protoc-bin-vendored = "3"
+
+[profile.release]
+strip = true
+lto = "thin"

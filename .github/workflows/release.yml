@@ -1,0 +1,83 @@
+name: Build plugin
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15-intel, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pnpm install --frozen-lockfile
+      - run: cargo test --locked
+      - run: pnpm run pack:plugin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-${{ matrix.os }}
+          path: |
+            dist/*.plugin.zip
+            dist/*-*.json
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: plugin-*
+          merge-multiple: true
+          path: artifacts
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/* --title "Game Record $GITHUB_REF_NAME" --generate-notes --verify-tag
+      - name: Update marketplace manifest
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          metadata = json.loads(Path("artifacts/windows-x64.json").read_text(encoding="utf-8"))
+          version = metadata["version"]
+          if os.environ["GITHUB_REF_NAME"] != f"v{version}":
+              raise ValueError("release tag does not match package version")
+          manifest = {"schemaVersion": 1, **metadata,
+                      "releaseNotes": "牌谱查看、编辑、导入导出、在线获取与一次性替换。需要包含牌谱插件接口更新的向听镜。",
+                      "releaseNotesUrl": f"https://github.com/SpCoGov/shanten-lens-game-record/releases/tag/v{version}",
+                      "publishedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
+          output = Path("marketplace/update.json")
+          output.parent.mkdir(exist_ok=True)
+          output.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add marketplace/update.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: update marketplace to $GITHUB_REF_NAME"
+          git push origin HEAD:main

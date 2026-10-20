@@ -1,0 +1,35 @@
+{
+  "id": "top.spco.game-record",
+  "name": "牌谱工具",
+  "version": "0.1.0",
+  "description": "查看、编辑、导入导出与替换游戏牌谱。市场安装包为 Windows x64；需要包含牌谱插件接口更新的向听镜。",
+  "author": "Shanten Lens Contributors",
+  "homepage": "https://github.com/SpCoGov/shanten-lens-game-record",
+  "source": "https://github.com/SpCoGov/shanten-lens-game-record",
+  "issues": "https://github.com/SpCoGov/shanten-lens-game-record/issues",
+  "apiVersion": 1,
+  "backend": {
+    "type": "process",
+    "entry": "backend/game-record.exe",
+    "args": []
+  },
+  "frontend": {
+    "entry": "frontend/index.js"
+  },
+  "defaultLocale": "zh-CN",
+  "permissions": {
+    "packet": [
+      "read",
+      "edit",
+      "inject"
+    ]
+  },
+  "license": "Apache-2.0",
+  "categories": [
+    "tools"
+  ],
+  "minimumAppVersion": "3.2.0",
+  "update": {
+    "manifestUrl": "https://raw.githubusercontent.com/SpCoGov/shanten-lens-game-record/main/marketplace/update.json"
+  }
+}

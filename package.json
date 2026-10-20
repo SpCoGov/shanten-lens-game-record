@@ -1,0 +1,22 @@
+{
+  "name": "shanten-lens-game-record",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "tsc --noEmit && vite build && cargo build --release",
+    "pack:plugin": "pnpm run build && python scripts/package.py"
+  },
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5",
+    "vite": "^5"
+  }
+}
